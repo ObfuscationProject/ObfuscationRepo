@@ -253,10 +253,7 @@ package("systoolchain")
         end
         -- Custom task options cannot be combined reliably with xmake's global
         -- -P option. Running in the tagged source root avoids that ambiguity.
-        local envs = modules.meson.buildenvs(package, {
-            packagedeps = {"glib", "pixman", "libsdl2"}
-        })
-        modules.os.vrunv(modules.os.programfile(), argv, {curdir = root, envs = envs})
+        modules.os.vrunv(modules.os.programfile(), argv, {curdir = root})
         check(modules.os.isfile(modules.path.join(package:installdir(), "bin", triple .. "-gcc")), fail,
             "package(%s): SysToolchain source build did not install %s-gcc", package:name(), triple)
         check(modules.os.isfile(modules.path.join(package:installdir(), "bin", qemu_systems[triple])), fail,
@@ -273,22 +270,12 @@ package("systoolchain")
             "package(%s): cached host identity does not match this process", package:name())
         package:addenv("PATH", "bin")
         if package:config("build_from_source") then
+            -- QEMU links the host GLib, Pixman and SDL2 shared libraries, so a
+            -- source build uses the host development files (see the SysToolchain
+            -- README) and the host pkg-config and Python that can find them.
             package:add("deps", "make", {host = true, kind = "binary"})
             package:add("deps", "m4", {host = true, kind = "binary"})
             package:add("deps", "ninja", {host = true, kind = "binary"})
-            package:add("deps", "pkg-config", {host = true, kind = "binary"})
-            package:add("deps", "python 3.x", {host = true, kind = "binary"})
-            package:add("deps", "glib", {host = true, configs = {shared = false}})
-            package:add("deps", "pixman", {host = true, configs = {shared = false}})
-            local sdl_configs = {
-                shared = false,
-                sdlmain = false
-            }
-            if os.host() == "linux" then
-                sdl_configs.x11 = true
-                sdl_configs.wayland = false
-            end
-            package:add("deps", "libsdl2", {host = true, configs = sdl_configs})
         end
     end)
 
@@ -299,7 +286,6 @@ package("systoolchain")
             package:name(), arch ~= "" and arch or "<unset>", supported_arches_message())
         local runtime = {os = os, path = path, io = io}
         if package:config("build_from_source") then
-            runtime.meson = import("package.tools.meson")
             install_from_source(package, triple, arch, runtime, raise)
         else
             runtime.http = import("net.http")
