@@ -5,10 +5,14 @@ and ObfuscationOS. Changes here follow SysToolchain releases.
 
 ## 1. Verify the download path once `v0.1.0` exists
 
-The recipe already prefers the GitHub Release archive and verifies the adjacent
-`.sha256`. After SysToolchain publishes `v0.1.0`, run the consumer fixture
-(`SysToolchain/tests/consumer`) with `build_from_source = false` on a clean
-host and record the result; then the kernel and OS flip their defaults.
+The recipe prefers the GitHub Release archive and verifies the adjacent
+`.sha256`. On 2026-10-25 the path was exercised with `SYSTOOLCHAIN_BINARY_MIRROR`
+pointing at the ten archives built in the release environment: the package
+installed and passed its own test for every target, and all ten kernel profiles
+passed `xmake test` with `build_from_source = false`. Repeat once against the
+published `v0.1.0` assets on a clean host and record the result. The
+source-build fallback now uses the host GLib, Pixman and SDL2 development files
+instead of static xmake-repo builds.
 
 ## 2. `systoolchain 0.2.0`
 
